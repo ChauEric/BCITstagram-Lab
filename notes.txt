@@ -1,0 +1,28 @@
+var fs = require("fs"),
+  PNG = require("pngjs").PNG;
+
+[This example function only reads in one image, you will need to write a way to read all .png files]
+fs.createReadStream("in.png") [This reads the png pixel by pixel and passes it to the next function]
+  .pipe(
+    new PNG({           [this is the transform stream]
+      filterType: 4,
+    })
+  )
+  .on("parsed", function () {
+    for (var y = 0; y < this.height; y++) {   [this. specifies the specific accessed object]
+      for (var x = 0; x < this.width; x++) {
+        var idx = (this.width * y + x) << 2; [<< bitshifter, shifts bit to the left 2 times, equivlant to 4 << 2 == 4 * 4]
+
+        // invert color
+        this.data[idx] = 255 - this.data[idx];          [this.data is an array of the png images pixels]
+        this.data[idx + 1] = 255 - this.data[idx + 1];  [invert color => this.data[] is the only thing you need to modify]
+        this.data[idx + 2] = 255 - this.data[idx + 2];
+
+        // and reduce opacity   [This can be ignored for now]
+        this.data[idx + 3] = this.data[idx + 3] >> 1;
+      }
+    }
+    [The original image is not altered, but instead creates a completely new image created from with an array where the pixel math is changed]
+    [this.pack creates the new png file and is piped to be written]
+    this.pack().pipe(fs.createWriteStream("out.png"));
+  });
